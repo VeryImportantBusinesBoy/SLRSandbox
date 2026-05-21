@@ -4,72 +4,366 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JME Maxwell</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
 <style>
+  :root {
+    --bg: #0a0a0a;
+    --ink: #f4f1ea;
+    --accent: #d6ff2e;
+    --muted: #6b6b6b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
   body {
-    margin: 0;
+    font-family: "Inter", system-ui, sans-serif;
     min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.45 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    z-index: 50;
+  }
+
+  .frame {
+    position: relative;
+    z-index: 1;
+    padding: 28px 36px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .topbar {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    font-family: Georgia, "Times New Roman", serif;
-    background: #f5f3ee;
-    color: #2a2a2a;
-    padding: 2rem;
-  }
-  main {
-    max-width: 620px;
-    background: #ffffff;
-    padding: 2.5rem 3rem;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-    line-height: 1.6;
-  }
-  h1 {
-    font-size: 2.4rem;
-    margin: 0 0 0.25rem;
-    letter-spacing: 1px;
-  }
-  h2 {
-    font-size: 1rem;
-    font-weight: normal;
-    color: #6b6b6b;
-    margin: 0 0 1.75rem;
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    color: var(--muted);
+    border-bottom: 1px solid #1f1f1f;
+    padding-bottom: 14px;
   }
-  p {
-    margin: 0 0 1rem;
+  .topbar .dot {
+    display: inline-block;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    margin-right: 8px;
+    vertical-align: middle;
+    box-shadow: 0 0 14px var(--accent);
   }
-  ul {
-    padding-left: 1.25rem;
-    margin: 0 0 1rem;
+
+  .eyebrow {
+    margin-top: 70px;
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
-  li {
-    margin-bottom: 0.35rem;
+  .eyebrow em {
+    color: var(--accent);
+    font-style: normal;
   }
+
+  h1.title {
+    font-family: "Archivo Black", "Helvetica Neue", sans-serif;
+    font-weight: 900;
+    line-height: 0.82;
+    letter-spacing: -0.04em;
+    margin: 12px 0 0;
+    font-size: clamp(72px, 17vw, 240px);
+    text-transform: uppercase;
+  }
+  h1.title .line-2 {
+    display: block;
+    color: var(--accent);
+    transform: translateX(8vw);
+  }
+
+  .strip {
+    margin-top: 24px;
+    font-family: "Archivo Black", sans-serif;
+    text-transform: uppercase;
+    font-size: clamp(13px, 1.3vw, 16px);
+    letter-spacing: 0.22em;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    padding: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .strip span.sep { color: var(--accent); }
+
+  .grid {
+    margin-top: 60px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 56px;
+  }
+  @media (max-width: 820px) {
+    .grid { grid-template-columns: 1fr; gap: 40px; }
+    h1.title .line-2 { transform: none; }
+  }
+
+  .label {
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 18px;
+  }
+
+  .topics {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .topics li {
+    font-family: "Archivo Black", sans-serif;
+    text-transform: uppercase;
+    font-size: clamp(26px, 4vw, 46px);
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    border-bottom: 1px solid #1f1f1f;
+    padding: 14px 0;
+    position: relative;
+  }
+  .topics li:first-child {
+    color: var(--accent);
+  }
+  .topics li::after {
+    content: attr(data-num);
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+  }
+
+  .bio p {
+    font-size: 15px;
+    line-height: 1.65;
+    margin: 0 0 16px;
+    color: #d8d5cc;
+  }
+  .bio p strong { color: var(--ink); }
+  .bio p.meta {
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .history {
+    margin-top: 60px;
+  }
+  .history-row {
+    display: grid;
+    grid-template-columns: 160px 1fr;
+    gap: 24px;
+    padding: 14px 0;
+    border-bottom: 1px solid #1f1f1f;
+    align-items: baseline;
+  }
+  .history-row:first-of-type { border-top: 1px solid #1f1f1f; }
+  .history-row .yr {
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .history-row .role {
+    font-family: "Archivo Black", sans-serif;
+    text-transform: uppercase;
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+  }
+  .history-row .role small {
+    display: block;
+    font-family: "Space Mono", monospace;
+    font-weight: 400;
+    text-transform: uppercase;
+    font-size: 11px;
+    color: #8a8579;
+    letter-spacing: 0.14em;
+    margin-top: 6px;
+  }
+  @media (max-width: 600px) {
+    .history-row { grid-template-columns: 1fr; gap: 6px; }
+  }
+
+  .creds {
+    margin-top: 40px;
+    font-family: "Space Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #b8b3a5;
+    line-height: 1.9;
+  }
+  .creds .sep { color: var(--muted); margin: 0 10px; }
+
+  .nav {
+    margin-top: 16px;
+    display: flex;
+    gap: 14px;
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+  .nav a { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 3px; transition: color 0.15s; }
+  .nav a:hover { color: var(--ink); }
+  .nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav .sep { color: #2a2a2a; }
+
   footer {
-    margin-top: 2rem;
-    font-size: 0.85rem;
-    color: #888;
-    border-top: 1px solid #eee;
-    padding-top: 1rem;
+    margin-top: 72px;
+    border-top: 1px solid #1f1f1f;
+    padding-top: 18px;
+    display: flex;
+    justify-content: space-between;
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
   }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
 </style>
 </head>
 <body>
-  <main>
-    <h1>JME Maxwell</h1>
-    <h2>CEO, Avaanz Ltd.</h2>
-    <p>I run Avaanz, a consultancy focused on economics, socio-economics, and environmental approvals. We work with developers, Indigenous governments, and public-sector clients across Canada, with deeper roots in power and solid waste.</p>
-    <p>Avaanz joined SLR in early 2026, so a lot of my current days are spent on integration and figuring out where AI actually fits inside a consulting business &mdash; not just the slideware version.</p>
-    <p>A few things I tend to get asked about:</p>
-    <ul>
-      <li>Running and growing consulting firms</li>
-      <li>Putting AI to work inside real businesses</li>
-      <li>Economics and infrastructure</li>
-      <li>Running and basketball, if you&rsquo;d rather talk about that</li>
-    </ul>
-    <footer>This is a sandbox. Expect tinkering.</footer>
-  </main>
+  <div class="frame">
+
+    <div class="topbar">
+      <div><span class="dot"></span>INDEX / JME MAXWELL</div>
+      <div>B. 1976 / CEO SINCE 2021</div>
+    </div>
+
+    <nav class="nav">
+      <a href="index.html" class="active">Index</a>
+      <span class="sep">/</span>
+      <a href="training.html">Training</a>
+    </nav>
+
+    <div class="eyebrow">CEO, <em>Avaanz Ltd.</em></div>
+
+    <h1 class="title">
+      <span class="line-1">JME</span>
+      <span class="line-2">MAXWELL</span>
+    </h1>
+
+    <div class="strip">
+      <span>Economics</span>
+      <span class="sep">///</span>
+      <span>Socio-Economics</span>
+      <span class="sep">///</span>
+      <span>Environmental Approvals</span>
+      <span class="sep">///</span>
+      <span>AI</span>
+    </div>
+
+    <div class="grid">
+      <section>
+        <div class="label">/ Now</div>
+        <ol class="topics">
+          <li data-num="01">Avaanz integration into SLR</li>
+          <li data-num="02">AI work with other SLR acquisitions</li>
+          <li data-num="03">AI into Avaanz internal systems (BD)</li>
+          <li data-num="04">Project work (director / contributor)</li>
+        </ol>
+      </section>
+
+      <section class="bio">
+        <div class="label">/ Facts</div>
+        <p><strong>Avaanz Ltd.</strong> sells economics, socio-economics, and environmental approvals work. Clients: developers, Indigenous governments and Indigenous-led organizations, and government. Concentrations: power and solid waste.</p>
+        <p>SLR acquired Avaanz on 2026-02-02. Avaanz operates as a wholly-owned subsidiary.</p>
+        <p>28 years in consulting. 6,109.2 hours billed across 75 Avaanz projects as of 2026-04-23.</p>
+      </section>
+    </div>
+
+    <div class="history">
+      <div class="label">/ History</div>
+      <div class="history-row">
+        <div class="yr">2021–Present</div>
+        <div class="role">CEO, Avaanz Ltd.</div>
+      </div>
+      <div class="history-row">
+        <div class="yr">2018–2020</div>
+        <div class="role">VP, AECOM Canada Environment<small>P&amp;L for 700 environmental consultants</small></div>
+      </div>
+      <div class="history-row">
+        <div class="yr">2019</div>
+        <div class="role">VP, AECOM Central US Environment<small>$120M/yr business; held concurrently</small></div>
+      </div>
+      <div class="history-row">
+        <div class="yr">2010–2017</div>
+        <div class="role">VP, AECOM Ontario Environment</div>
+      </div>
+      <div class="history-row">
+        <div class="yr">2003–2020</div>
+        <div class="role">Senior Consultant, AECOM Economics<small>Parallel IC track held alongside VP roles</small></div>
+      </div>
+      <div class="history-row">
+        <div class="yr">2001–2003</div>
+        <div class="role">Principal, Environment Strategies Ltd.</div>
+      </div>
+      <div class="history-row">
+        <div class="yr">1999–2001</div>
+        <div class="role">Web Tactics<small>Project manager, web development</small></div>
+      </div>
+      <div class="history-row">
+        <div class="yr">1998–1999</div>
+        <div class="role">Independent Contractor<small>Network installs</small></div>
+      </div>
+    </div>
+
+    <div class="creds">
+      MBA, Wilfrid Laurier
+      <span class="sep">·</span>
+      B.Sc., Queen's
+      <span class="sep">·</span>
+      Executive MBA, UCLA / AECOM
+      <span class="sep">·</span>
+      GBA+
+      <span class="sep">·</span>
+      OCAP
+    </div>
+
+    <section class="bio history">
+      <div class="label">/ Reflection — AI Sandbox</div>
+      <p class="meta">May 2026 · Voice Note</p>
+      <p>The SLR AI immersion program — the "Sandbox" — has been a positive experience. What works: the freedom to use tools and capabilities not available in the normal work environment; watching colleagues get hooked on it for the first time; a group of sharp people to test ideas against; and real cross-org connection. SLR is built from multiple acquisitions, and the Sandbox has been a way to actually meet people across the company.</p>
+      <p>It has also been a personal stretch. Command-line work isn't where I usually spend time — I'm normally in GitHub, not the terminal — and the Sandbox pushes into that territory.</p>
+      <p>The open question is the rollout model: a small group of tool makers building for everyone, or a ubiquitous tool on every desk like Excel. That answer shapes training, support, governance, hiring, and how the value gets measured.</p>
+    </section>
+
+    <footer>
+      <div>INDEX · 2026</div>
+      <div><a href="training.html">TRAINING →</a></div>
+    </footer>
+
+  </div>
 </body>
 </html>
