@@ -171,6 +171,33 @@
     color: var(--muted);
     margin-bottom: 18px;
   }
+  ol.insights {
+    list-style: none;
+    counter-reset: ins;
+    padding: 0;
+    margin: 0;
+  }
+  ol.insights li {
+    position: relative;
+    padding: 16px 0 16px 46px;
+    border-bottom: 1px solid #1f1f1f;
+    font-size: 15px;
+    line-height: 1.62;
+    color: #d8d5cc;
+  }
+  ol.insights li:first-child { border-top: 1px solid #1f1f1f; }
+  ol.insights li::before {
+    counter-increment: ins;
+    content: counter(ins, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 18px;
+    font-family: "Space Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+  }
+  ol.insights li b { color: var(--ink); font-weight: 600; }
 
   .history {
     margin-top: 60px;
@@ -352,11 +379,23 @@
     </div>
 
     <section class="bio history">
-      <div class="label">/ Reflection — AI Sandbox</div>
+      <div class="label">/ Reflection - AI Sandbox</div>
       <p class="meta">May 2026 · Voice Note</p>
       <p>The SLR AI immersion program — the "Sandbox" — has been a positive experience. What works: the freedom to use tools and capabilities not available in the normal work environment; watching colleagues get hooked on it for the first time; a group of sharp people to test ideas against; and real cross-org connection. SLR is built from multiple acquisitions, and the Sandbox has been a way to actually meet people across the company.</p>
       <p>It has also been a personal stretch. Command-line work isn't where I usually spend time — I'm normally in GitHub, not the terminal — and the Sandbox pushes into that territory.</p>
       <p>The open question is the rollout model: a small group of tool makers building for everyone, or a ubiquitous tool on every desk like Excel. That answer shapes training, support, governance, hiring, and how the value gets measured.</p>
+    </section>
+
+    <section class="bio history">
+      <div class="label">/ Insights - AI Sandbox</div>
+      <p class="meta">May 2026 · Field Notes</p>
+      <ol class="insights">
+        <li><b>Highest value was AI on our own work, not tools for others.</b> For a company assembled from legacy firms, getting internal teams using AI on their real work beats building tools for external users.</li>
+        <li><b>Adoption runs on a "first hit free" pattern.</b> People get hooked the moment they see what AI can do, and the tool teaches itself from there. The hook is what matters, not the duration after it.</li>
+        <li><b>Cut cost by shortening, not rationing.</b> Unfettered access was critical; gating it would have hidden the real potential. Trim duration instead of access.</li>
+        <li><b>The US academic setting was the right call.</b> Anchoring the offsite where the company wants to grow reinforces the growth thesis, and an academic setting earns a focus a conference centre cannot.</li>
+        <li><b>The next frontier is APIs, not dashboards.</b> As AI becomes the predominant user, value shifts to building and securing the APIs that AIs call. AI-to-API security is a major open area.</li>
+      </ol>
     </section>
 
     <footer>
