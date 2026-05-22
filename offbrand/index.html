@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SLR Off-Brand Lab — subtly-wrong brand variant generator</title>
+<meta name="description" content="Generates convincing-but-subtly-wrong versions of the SLR brand for spot-the-fake brand-integrity training.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* SLR's real palette, lifted from slrconsulting.com/us/css/main.css */
+    --green-100:#eef7db; --green-200:#d6f591; --green-300:#a9c272;
+    --green-400:#667545; --green-500:#3c533c; --green-600:#263326;
+    --neutral-100:#f6f6f2; --neutral-200:#ebece7; --neutral-300:#d4d9d2;
+    --neutral-400:#bec5bc; --neutral-500:#51544a;
+    --ink:#1e1e1e; --white:#fff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Figtree",system-ui,sans-serif;
+    background:var(--neutral-100);
+    color:var(--ink);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:"Spectral","Albra",Georgia,serif;font-weight:600;line-height:1.15;margin:0;}
+  a{color:var(--green-500);}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 24px;}
+
+  /* ---- header ---- */
+  header{
+    border-bottom:1px solid var(--neutral-300);
+    background:var(--white);
+  }
+  .head-inner{display:flex;flex-wrap:wrap;align-items:center;gap:24px 40px;padding:26px 0 28px;}
+  .brandmark{width:150px;flex:none;color:var(--green-600);}
+  .brandmark svg{width:100%;height:auto;display:block;}
+  .head-copy{flex:1;min-width:260px;}
+  .kicker{
+    font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--green-400);font-weight:700;margin-bottom:6px;
+  }
+  .head-copy h1{font-size:30px;}
+  .head-copy p{margin:8px 0 0;color:var(--neutral-500);max-width:60ch;font-size:15px;}
+
+  /* ---- tabs ---- */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--neutral-300);margin-top:28px;flex-wrap:wrap;}
+  .tab{
+    appearance:none;border:0;background:none;cursor:pointer;
+    font-family:inherit;font-size:14px;font-weight:600;color:var(--neutral-500);
+    padding:12px 18px;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .tab:hover{color:var(--ink);}
+  .tab.active{color:var(--green-600);border-bottom-color:var(--green-400);}
+  .panel{display:none;padding:30px 0 10px;}
+  .panel.active{display:block;}
+
+  /* ---- controls ---- */
+  .controls{
+    background:var(--white);border:1px solid var(--neutral-300);border-radius:14px;
+    padding:20px 22px;margin-bottom:26px;
+  }
+  .ctl-row{display:flex;flex-wrap:wrap;gap:22px 34px;align-items:flex-end;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--neutral-500);text-transform:uppercase;}
+  .field .val{font-weight:600;color:var(--green-500);font-variant-numeric:tabular-nums;}
+  input[type=range]{width:190px;accent-color:var(--green-400);}
+  select{
+    font-family:inherit;font-size:14px;padding:7px 10px;border-radius:8px;
+    border:1px solid var(--neutral-300);background:var(--white);color:var(--ink);
+  }
+  .btn{
+    appearance:none;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
+    padding:11px 20px;border-radius:9px;border:1px solid var(--green-500);
+    background:var(--green-500);color:var(--white);
+  }
+  .btn:hover{background:var(--green-600);border-color:var(--green-600);}
+  .btn.ghost{background:var(--white);color:var(--green-600);}
+  .btn.ghost:hover{background:var(--green-100);}
+  .btn.small{padding:6px 12px;font-size:12px;}
+  .checks{display:flex;flex-wrap:wrap;gap:6px 8px;}
+  .chip{
+    display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;
+    padding:6px 11px;border-radius:999px;border:1px solid var(--neutral-300);
+    background:var(--neutral-100);cursor:pointer;user-select:none;color:var(--neutral-500);
+  }
+  .chip input{accent-color:var(--green-400);margin:0;}
+  .chip.on{background:var(--green-100);border-color:var(--green-300);color:var(--green-600);}
+  .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;}
+
+  /* ---- logo cards ---- */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  @media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:520px){.grid{grid-template-columns:1fr;}}
+  .card{
+    background:var(--white);border:1px solid var(--neutral-300);border-radius:14px;
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .stage{
+    padding:34px 26px;display:flex;align-items:center;justify-content:center;
+    min-height:130px;background:var(--white);
+    background-image:linear-gradient(45deg,#fafaf8 25%,transparent 25%),linear-gradient(-45deg,#fafaf8 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#fafaf8 75%),linear-gradient(-45deg,transparent 75%,#fafaf8 75%);
+    background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0;
+  }
+  .stage svg{width:74%;max-width:230px;height:auto;}
+  .card-meta{
+    border-top:1px solid var(--neutral-200);padding:11px 14px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+  }
+  .card-name{font-size:12.5px;font-weight:700;color:var(--neutral-500);}
+  .card-meta .tools{display:flex;gap:6px;}
+  .iconbtn{
+    appearance:none;border:1px solid var(--neutral-300);background:var(--white);
+    cursor:pointer;border-radius:7px;width:30px;height:30px;font-size:14px;line-height:1;
+    color:var(--neutral-500);
+  }
+  .iconbtn:hover{background:var(--green-100);color:var(--green-600);border-color:var(--green-300);}
+  .flaws{
+    padding:0 14px;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s ease;
+    font-size:12.5px;color:var(--neutral-500);background:var(--neutral-100);
+  }
+  .flaws.show{max-height:240px;padding:11px 14px;border-top:1px solid var(--neutral-200);}
+  .flaws b{color:var(--green-600);}
+  .flaws ul{margin:6px 0 0;padding-left:18px;}
+  .badge{
+    font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    padding:3px 8px;border-radius:5px;
+  }
+  .badge.real{background:var(--green-200);color:var(--green-600);}
+  .badge.fake{background:#f3dcdc;color:#7d2b2b;}
+
+  /* ---- reference strip ---- */
+  .ref{
+    display:flex;flex-wrap:wrap;align-items:center;gap:18px 30px;
+    background:var(--green-600);color:var(--green-100);border-radius:14px;
+    padding:22px 26px;margin-bottom:26px;
+  }
+  .ref .reflogo{width:170px;color:var(--green-100);flex:none;}
+  .ref .reflogo svg{width:100%;height:auto;display:block;}
+  .ref-txt{flex:1;min-width:240px;font-size:13.5px;}
+  .ref-txt b{color:var(--white);font-family:"Spectral",serif;font-size:15px;}
+
+  /* ---- lab ---- */
+  .lab-stage{
+    background:var(--white);border:1px solid var(--neutral-300);border-radius:14px;
+    padding:46px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;
+    background-image:linear-gradient(45deg,#fafaf8 25%,transparent 25%),linear-gradient(-45deg,#fafaf8 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#fafaf8 75%),linear-gradient(-45deg,transparent 75%,#fafaf8 75%);
+    background-size:22px 22px;background-position:0 0,0 11px,11px -11px,-11px 0;
+  }
+  .lab-stage svg{width:62%;max-width:340px;height:auto;}
+  .lab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 28px;}
+  @media(max-width:720px){.lab-grid{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:460px){.lab-grid{grid-template-columns:1fr;}}
+
+  /* ---- palette ---- */
+  .pal{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+  @media(max-width:620px){.pal{grid-template-columns:repeat(3,1fr);}}
+  .swatch{border-radius:10px;overflow:hidden;border:1px solid var(--neutral-300);}
+  .swatch .chipcol{height:64px;}
+  .swatch .lbl{padding:7px 9px;font-size:11px;background:var(--white);}
+  .swatch .lbl .hx{font-weight:700;font-variant-numeric:tabular-nums;}
+  .swatch .lbl .nm{color:var(--neutral-500);}
+  .pal-head{display:flex;align-items:baseline;gap:12px;margin:22px 0 9px;}
+  .pal-head h3{font-size:16px;}
+  .pal-head .tag{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+  .tag.ok{color:var(--green-400);} .tag.bad{color:#a3503e;}
+
+  /* ---- game ---- */
+  .game-bar{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-bottom:20px;}
+  .score{font-size:14px;font-weight:600;color:var(--neutral-500);}
+  .score b{color:var(--green-600);font-size:17px;}
+  .g-tile{cursor:pointer;transition:transform .1s ease;}
+  .g-tile:hover{transform:translateY(-2px);}
+  .g-tile.locked{cursor:default;}
+  .g-tile.picked-right{outline:3px solid var(--green-300);outline-offset:-3px;}
+  .g-tile.picked-wrong{outline:3px solid #d98c8c;outline-offset:-3px;}
+  .g-result{font-size:14px;font-weight:600;min-height:22px;}
+  .g-result.win{color:var(--green-500);} .g-result.lose{color:#a3503e;}
+
+  .note{font-size:13px;color:var(--neutral-500);}
+  footer{
+    border-top:1px solid var(--neutral-300);margin-top:46px;padding:24px 0 40px;
+    font-size:12.5px;color:var(--neutral-500);
+  }
+  footer p{margin:5px 0;}
+  .hint{font-size:12.5px;color:var(--neutral-500);margin:-12px 0 18px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="head-inner">
+      <div class="brandmark" id="headLogo"></div>
+      <div class="head-copy">
+        <div class="kicker">Brand Integrity · Spot-the-Fake Lab</div>
+        <h1>SLR Off-Brand Generator</h1>
+        <p>Produces logo and palette variants that look right at a glance but are
+           quietly, definitely wrong — drifted greens, a hair of skew, the not-quite font.
+           Built as a training aid: generate convincing fakes so the team learns to catch
+           off-brand usage in the wild.</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" data-tab="gen">Generator</button>
+    <button class="tab" data-tab="lab">Distortion Lab</button>
+    <button class="tab" data-tab="game">Spot the Real One</button>
+    <button class="tab" data-tab="pal">Palette Drift</button>
+  </div>
+
+  <!-- ================= GENERATOR ================= -->
+  <section class="panel active" id="panel-gen">
+    <div class="ref">
+      <div class="reflogo" id="refLogo"></div>
+      <div class="ref-txt">
+        <b>This is the authentic mark.</b><br>
+        Deep green <code>#263326</code>, true geometry, real wordmark. Every tile below
+        is a forgery with one or two deliberate, subtle defects. Hit Generate, then turn on
+        “Reveal defects” to check your eye.
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="ctl-row">
+        <div class="field">
+          <label>Wrongness <span class="val" id="genIntVal">60%</span></label>
+          <input type="range" id="genInt" min="10" max="100" value="60">
+        </div>
+        <div class="field">
+          <label>Defect types in play</label>
+          <div class="checks" id="genCats"></div>
+        </div>
+      </div>
+      <div class="ctl-row" style="margin-top:16px;">
+        <button class="btn" id="genBtn">↻ Generate 9 forgeries</button>
+        <label class="switch"><input type="checkbox" id="genReveal"> Reveal defects</label>
+      </div>
+    </div>
+    <p class="hint">Tip: press <b>G</b> to regenerate. Each tile’s ⤓ exports a PNG, ⌑ exports SVG.</p>
+    <div class="grid" id="genGrid"></div>
+  </section>
+
+  <!-- ================= LAB ================= -->
+  <section class="panel" id="panel-lab">
+    <div class="lab-stage"><div id="labLogo" style="width:100%;display:flex;justify-content:center;"></div></div>
+    <div class="ctl-row" style="margin-bottom:20px;">
+      <button class="btn" id="labRand">↻ Randomise</button>
+      <button class="btn ghost" id="labReset">Reset to authentic</button>
+      <button class="btn ghost" id="labPng">⤓ Download PNG</button>
+      <button class="btn ghost" id="labSvg">⌑ Download SVG</button>
+    </div>
+    <div class="controls">
+      <div class="lab-grid" id="labCtls"></div>
+    </div>
+    <p class="note">The Lab gives you direct control of every defect axis. Everything here
+       is the same machinery the Generator randomises — useful for reproducing a specific
+       off-brand mistake you’ve spotted.</p>
+  </section>
+
+  <!-- ================= GAME ================= -->
+  <section class="panel" id="panel-game">
+    <div class="game-bar">
+      <button class="btn" id="gameNew">↻ New round</button>
+      <div class="score">Score <b id="gScore">0</b> / <span id="gRounds">0</span></div>
+      <div class="g-result" id="gResult"></div>
+    </div>
+    <p class="hint">Five of these six are forgeries with one subtle defect each. Click the
+       <b>authentic</b> SLR mark.</p>
+    <div class="grid" id="gameGrid"></div>
+  </section>
+
+  <!-- ================= PALETTE ================= -->
+  <section class="panel" id="panel-pal">
+    <div class="controls">
+      <div class="ctl-row">
+        <div class="field">
+          <label>Hue drift <span class="val" id="pHueV">+0°</span></label>
+          <input type="range" id="pHue" min="-25" max="25" value="9">
+        </div>
+        <div class="field">
+          <label>Saturation drift <span class="val" id="pSatV">+0%</span></label>
+          <input type="range" id="pSat" min="-30" max="30" value="-12">
+        </div>
+        <div class="field">
+          <label>Lightness drift <span class="val" id="pLitV">+0%</span></label>
+          <input type="range" id="pLit" min="-20" max="20" value="7">
+        </div>
+        <button class="btn ghost" id="pRand">↻ Random drift</button>
+      </div>
+    </div>
+    <div class="pal-head"><h3>SLR greens</h3><span class="tag ok">Authentic</span></div>
+    <div class="pal" id="palReal"></div>
+    <div class="pal-head"><h3>Drifted greens</h3><span class="tag bad">Off-brand — close enough to slip past</span></div>
+    <div class="pal" id="palFake"></div>
+    <p class="note" style="margin-top:14px;">A few degrees of hue and a touch less saturation
+       is all it takes. On a slide deck nobody notices; side by side it’s plainly the wrong green.</p>
+  </section>
+
+  <footer>
+    <p><b>SLR Off-Brand Lab.</b> A brand-integrity training tool — it manufactures believable
+       fakes so people get better at spotting them.</p>
+    <p>Logo geometry and the green/neutral palette were taken from the public
+       <a href="https://www.slrconsulting.com/us/" target="_blank" rel="noopener">slrconsulting.com</a>
+       site (2026 brand by Renowned Studio). Not affiliated with SLR Consulting; intended for
+       internal brand QA and spot-the-fake practice.</p>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   SLR Off-Brand Lab
+   - REAL assets pulled from slrconsulting.com
+   ============================================================ */
+
+/* --- real SLR logo geometry (viewBox 0 0 283 80) --- */
+const ICON_PATHS =
+  '<path d="M79.5,0H57.6c-0.3,0-0.5,0.2-0.5,0.5v9.3c0,0.3,0.2,0.5,0.5,0.5h12v12c0,0.3,0.2,0.5,0.5,0.5h9.3c0.3,0,0.5-0.2,0.5-0.5V0.5C80,0.2,79.7,0,79.5,0L79.5,0z"/>'
++ '<path d="M79.5,34.8H53c-0.3,0-0.5,0.2-0.5,0.5v9.2c0,0.4-0.2,0.8-0.5,1.1L45.6,52c-0.3,0.3-0.7,0.5-1.1,0.5h-9c-0.4,0-0.8-0.2-1.1-0.5L28,45.6c-0.3-0.3-0.5-0.7-0.5-1.1v-9c0-0.4,0.2-0.8,0.5-1.1l6.4-6.4c0.3-0.3,0.7-0.5,1.1-0.5h9.2c0.3,0,0.5-0.2,0.5-0.5V0.5c0-0.3-0.2-0.5-0.5-0.5h-9.3c-0.3,0-0.5,0.2-0.5,0.5v26.3c0,0.1-0.1,0.2-0.2,0.2l0,0c-0.1,0-0.2,0-0.3-0.1L15.8,8.4c-0.2-0.2-0.6-0.2-0.8,0L8.4,15c-0.2,0.2-0.2,0.6,0,0.8L27,34.3c0.1,0.1,0.1,0.2,0.1,0.3l0,0c0,0.1-0.1,0.2-0.2,0.2H0.5c-0.3,0-0.5,0.2-0.5,0.5v9.3c0,0.3,0.2,0.5,0.5,0.5h26.3c0.1,0,0.2,0.1,0.2,0.2l0,0c0,0.1,0,0.2-0.1,0.3L8.4,64.2c-0.2,0.2-0.2,0.6,0,0.8l6.6,6.6c0.2,0.2,0.5,0.2,0.8,0L34.3,53c0.1-0.1,0.2-0.1,0.3-0.1c0.1,0,0.2,0.2,0.2,0.3v26.2c0,0.3,0.2,0.5,0.5,0.5h9.3c0.3,0,0.5-0.2,0.5-0.5V53.2c0-0.1,0.1-0.2,0.2-0.2l0,0c0.1,0,0.2,0,0.3,0.1l18.6,18.6c0.2,0.2,0.6,0.2,0.8,0l6.6-6.6c0.2-0.2,0.2-0.5,0-0.8L53,45.7c-0.1-0.1-0.1-0.2-0.1-0.3l0,0c0-0.1,0.1-0.2,0.2-0.2h26.3c0.3,0,0.5-0.2,0.5-0.5v-9.3C80,35.1,79.8,34.8,79.5,34.8z"/>';
+
+const LETTERS = {
+  S:{cx:126,cy:40,d:"M106.7,21.1c0-8.7,7.2-12.7,18.1-12.7c12.5,0,19,5.1,19.9,15.1c0,0,0,0,0,0c0,0.4,0.4,0.7,0.8,0.7h9.2c0.4,0,0.8-0.3,0.7-0.8C153.8,7.5,142.8,0,125.1,0c-17.2,0-28.4,8-28.4,22.1c0,29.5,50.4,13.9,50.4,35.2c0,10.2-8.1,14.4-19.6,14.4c-15.1,0-20.8-7.2-21.7-18.9c-0.1-0.4-0.4-0.8-0.9-0.8h-9.1c0,0,0,0,0,0c-0.4,0-0.7,0.4-0.7,0.8C95.8,70.5,107.5,80,127.3,80c17.6,0,29.8-8.1,29.8-24C157.1,25.9,106.8,41,106.7,21.1L106.7,21.1z"},
+  L:{cx:190,cy:40,d:"M212.2,70.4h-34.5V2.1c0,0,0,0,0,0c0-0.4-0.4-0.7-0.8-0.7c0,0-8.9,0-8.9,0c-0.4,0-0.7,0.4-0.7,0.8v75.8c0,0,0,0,0,0c0,0.4,0.4,0.7,0.8,0.7h44.1c0.4,0,0.8-0.4,0.8-0.8v-6.7C212.9,70.7,212.6,70.4,212.2,70.4L212.2,70.4z"},
+  R:{cx:254,cy:40,d:"M282.9,78l-20.3-31.8c11.6-2.4,18.8-9.7,18.8-22.1C281.4,9,270.5,1.3,253,1.3h-27.3c0,0,0,0,0,0c-0.4,0-0.7,0.4-0.7,0.8v75.8c0,0,0,0,0,0c0,0.4,0.4,0.7,0.8,0.7h9c0,0,0,0,0,0c0.4,0,0.8-0.4,0.7-0.8V47.1h16.2L270.9,78c0.3,0.3,0.8,0.7,1.2,0.7h10.5c0.1,0,0.2,0,0.3-0.1C283,78.4,283.1,78.2,282.9,78L282.9,78z M235.4,39V9.5h18.1c10.9,0,17.5,5,17.5,14.8c0,10.4-7.1,14.7-17.2,14.7H235.4z"}
+};
+
+const LOGO_BASE = '#263326';            // authentic logo green (green-600)
+const NEAR_FONTS = ['Arial','Helvetica','Verdana','Tahoma','Georgia','Times New Roman','Trebuchet MS'];
+
+/* SLR's real greens */
+const GREENS = [
+  {nm:'green-100',hx:'#eef7db'},{nm:'green-200',hx:'#d6f591'},
+  {nm:'green-300',hx:'#a9c272'},{nm:'green-400',hx:'#667545'},
+  {nm:'green-500',hx:'#3c533c'},{nm:'green-600',hx:'#263326'}
+];
+
+/* ---------- colour helpers ---------- */
+function hexToRgb(h){h=h.replace('#','');return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
+function rgbToHex(r,g,b){const c=v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0');return'#'+c(r)+c(g)+c(b);}
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;
+  if(mx===mn){h=s=0;}else{const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);
+    if(mx===r)h=(g-b)/d+(g<b?6:0);else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h/=6;}
+  return[h*360,s,l];
+}
+function hslToRgb(h,s,l){
+  h=((h%360)+360)%360/360;
+  if(s===0){const v=l*255;return[v,v,v];}
+  const hue2=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
+  const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+  return[hue2(p,q,h+1/3)*255,hue2(p,q,h)*255,hue2(p,q,h-1/3)*255];
+}
+/* drift a hex colour by hue(deg)/sat(-1..1)/light(-1..1) deltas */
+function drift(hex,dH,dS,dL){
+  const[r,g,b]=hexToRgb(hex);let[h,s,l]=rgbToHsl(r,g,b);
+  h+=dH;s=Math.max(0,Math.min(1,s+dS));l=Math.max(0,Math.min(1,l+dL));
+  const[nr,ng,nb]=hslToRgb(h,s,l);return rgbToHex(nr,ng,nb);
+}
+
+/* ---------- seeded RNG ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+/* =========================================================
+   PARAM MODEL
+   identity params -> the authentic logo
+   ========================================================= */
+function identity(){
+  return{rot:0,skewX:0,skewY:0,scaleX:0,scaleY:0,
+    iconRot:0,iconScale:0,
+    kern:0,sDy:0,sRot:0,lDy:0,lRot:0,rDy:0,rRot:0,
+    hue:0,sat:0,light:0,iconHue:0,
+    blur:0,chroma:0,font:null};
+}
+
+/* ---------- render one logo to an <svg> string ---------- */
+let UID=0;
+function renderLogo(p,opts){
+  opts=opts||{};
+  const id='f'+(UID++);
+  const txtCol=drift(LOGO_BASE,p.hue,p.sat,p.light);
+  const icoCol=drift(LOGO_BASE,p.hue+p.iconHue,p.sat,p.light);
+
+  let filter='',fattr='';
+  if(p.blur>0.02||p.chroma>0.02){
+    const c=p.chroma;
+    filter=
+     '<filter id="'+id+'" x="-25%" y="-25%" width="150%" height="150%">'
+    +'<feGaussianBlur stdDeviation="'+p.blur.toFixed(2)+'" result="bl"/>'
+    +'<feOffset in="bl" dx="'+(-c).toFixed(2)+'" dy="'+(-c*0.35).toFixed(2)+'" result="ro"/>'
+    +'<feColorMatrix in="ro" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .5 0" result="rc"/>'
+    +'<feOffset in="bl" dx="'+c.toFixed(2)+'" dy="'+(c*0.35).toFixed(2)+'" result="bo"/>'
+    +'<feColorMatrix in="bo" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 .5 0" result="bc"/>'
+    +'<feMerge><feMergeNode in="rc"/><feMergeNode in="bc"/><feMergeNode in="bl"/></feMerge>'
+    +'</filter>';
+    fattr=' filter="url(#'+id+')"';
+  }
+
+  // whole-logo geometry, about logo centre (141.5,40)
+  const geo='translate(141.5 40) rotate('+p.rot.toFixed(2)+') '
+    +'skewX('+p.skewX.toFixed(2)+') skewY('+p.skewY.toFixed(2)+') '
+    +'scale('+(1+p.scaleX).toFixed(3)+' '+(1+p.scaleY).toFixed(3)+') '
+    +'translate(-141.5 -40)';
+
+  const icoT='translate(40 40) rotate('+p.iconRot.toFixed(2)+') '
+    +'scale('+(1+p.iconScale).toFixed(3)+') translate(-40 -40)';
+
+  let wordmark;
+  if(p.font){
+    wordmark='<text x="96" y="71" textLength="187" lengthAdjust="spacingAndGlyphs" '
+      +'font-family="'+p.font+', sans-serif" font-weight="800" font-size="86" '
+      +'fill="'+txtCol+'">SLR</text>';
+  }else{
+    const lt=(L,dx,dy,rot)=>'<g transform="translate('+dx.toFixed(2)+' '+dy.toFixed(2)
+      +') rotate('+rot.toFixed(2)+' '+LETTERS[L].cx+' '+LETTERS[L].cy+')">'
+      +'<path d="'+LETTERS[L].d+'" fill="'+txtCol+'"/></g>';
+    wordmark=lt('S',-p.kern,p.sDy,p.sRot)+lt('L',0,p.lDy,p.lRot)+lt('R',p.kern,p.rDy,p.rRot);
+  }
+
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 283 80" '
+    +(opts.cls?'class="'+opts.cls+'" ':'')+'role="img" aria-label="SLR logo variant">'
+    +(filter?'<defs>'+filter+'</defs>':'')
+    +'<g'+fattr+'><g transform="'+geo+'">'
+    +'<g transform="'+icoT+'" fill="'+icoCol+'">'+ICON_PATHS+'</g>'
+    +wordmark
+    +'</g></g></svg>';
+}
+
+/* =========================================================
+   VARIANT GENERATION
+   ========================================================= */
+const CATS=[
+  {key:'geometry',label:'Geometry'},
+  {key:'color',   label:'Colour drift'},
+  {key:'type',    label:'Wrong font'},
+  {key:'kerning', label:'Spacing'},
+  {key:'icon',    label:'Icon'},
+  {key:'glitch',  label:'Print / glitch'}
+];
+
+function pm(rng,m){return(rng()*2-1)*m;}        // plus/minus
+function pos(rng,a,b){return a+rng()*(b-a);}    // positive range
+
+/* build params + human-readable flaw list for one forgery */
+function makeVariant(rng,intensity,allowed){
+  const p=identity(),flaws=[];
+  const i=intensity;
+  let pool=CATS.map(c=>c.key).filter(k=>allowed.includes(k));
+  if(!pool.length)pool=CATS.map(c=>c.key);
+  // shuffle
+  for(let k=pool.length-1;k>0;k--){const j=(rng()*(k+1))|0;[pool[k],pool[j]]=[pool[j],pool[k]];}
+  const n=rng()<0.7?1:(rng()<0.7?2:3);
+  const use=pool.slice(0,Math.min(n,pool.length));
+
+  for(const cat of use){
+    if(cat==='geometry'){
+      p.rot=pm(rng,3*i);p.skewX=pm(rng,3.4*i);p.skewY=pm(rng,1.3*i);
+      p.scaleX=pm(rng,0.06*i);p.scaleY=pm(rng,0.06*i);
+      if(Math.abs(p.rot)>Math.abs(p.skewX))flaws.push('Whole mark rotated '+p.rot.toFixed(1)+'°');
+      else flaws.push('Horizontal skew of '+p.skewX.toFixed(1)+'°');
+      if(Math.abs(p.scaleY-p.scaleX)>0.03)
+        flaws.push((p.scaleY<p.scaleX?'Vertically squashed ':'Vertically stretched ')
+          +Math.abs((p.scaleY-p.scaleX)*100).toFixed(0)+'%');
+    }else if(cat==='color'){
+      p.hue=pm(rng,15*i);p.sat=pm(rng,0.2*i);p.light=pm(rng,0.11*i);
+      p.iconHue=pm(rng,8*i);
+      flaws.push('Logo green off by '+(p.hue>=0?'+':'')+p.hue.toFixed(0)+'° hue, '
+        +(p.sat>=0?'+':'')+(p.sat*100).toFixed(0)+'% saturation');
+      if(Math.abs(p.iconHue)>4)flaws.push('Icon tinted slightly off from the wordmark');
+    }else if(cat==='type'){
+      p.font=NEAR_FONTS[(rng()*NEAR_FONTS.length)|0];
+      flaws.push('Wordmark set in '+p.font+' instead of the custom SLR mark');
+    }else if(cat==='kerning'){
+      p.kern=pm(rng,7*i);
+      p.sDy=pm(rng,2.3*i);p.lDy=pm(rng,2.3*i);p.rDy=pm(rng,2.3*i);
+      p.sRot=pm(rng,4*i);p.rRot=pm(rng,4*i);
+      flaws.push(p.kern>=0?'Letter-spacing opened up':'Letters tracked too tight');
+      if(Math.abs(p.sDy)+Math.abs(p.rDy)>2.5)flaws.push('Letters wandering off the baseline');
+    }else if(cat==='icon'){
+      p.iconRot=pm(rng,11*i);p.iconScale=pm(rng,0.09*i);
+      flaws.push('Icon rotated '+p.iconRot.toFixed(1)+'° / rescaled '
+        +(p.iconScale>=0?'+':'')+(p.iconScale*100).toFixed(0)+'%');
+    }else if(cat==='glitch'){
+      p.blur=pos(rng,0.25,1.3*Math.max(.4,i));
+      p.chroma=pos(rng,0.4,1.9*Math.max(.4,i));
+      flaws.push('Faint chromatic fringing & soft focus (bad print / export)');
+    }
+  }
+  return{params:p,flaws,cats:use};
+}
+
+/* ---------- PNG / SVG export ---------- */
+function downloadBlob(blob,name){
+  const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();
+  a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000);
+}
+function exportSVG(svgString,name){
+  downloadBlob(new Blob([svgString],{type:'image/svg+xml'}),name+'.svg');
+}
+function exportPNG(svgString,name){
+  const scale=4,W=283*scale,H=80*scale;
+  const img=new Image();
+  const blob=new Blob([svgString],{type:'image/svg+xml'});
+  const url=URL.createObjectURL(blob);
+  img.onload=function(){
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+    const ctx=cv.getContext('2d');
+    ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);
+    ctx.drawImage(img,0,0,W,H);
+    URL.revokeObjectURL(url);
+    cv.toBlob(b=>downloadBlob(b,name+'.png'),'image/png');
+  };
+  img.onerror=function(){URL.revokeObjectURL(url);alert('PNG export failed in this browser — try SVG.');};
+  img.src=url;
+}
+
+/* =========================================================
+   GENERATOR TAB
+   ========================================================= */
+const genGrid=document.getElementById('genGrid');
+const genInt=document.getElementById('genInt');
+const genCatsEl=document.getElementById('genCats');
+let genSeed=Date.now();
+
+CATS.forEach(c=>{
+  const l=document.createElement('label');
+  l.className='chip on';
+  l.innerHTML='<input type="checkbox" checked value="'+c.key+'"> '+c.label;
+  l.querySelector('input').addEventListener('change',e=>{
+    l.classList.toggle('on',e.target.checked);
+  });
+  genCatsEl.appendChild(l);
+});
+function activeCats(){
+  return[...genCatsEl.querySelectorAll('input:checked')].map(i=>i.value);
+}
+
+function generate(){
+  genSeed=(genSeed*1664525+1013904223)>>>0;
+  const rng=mulberry32(genSeed);
+  const intensity=+genInt.value/100;
+  const allowed=activeCats();
+  genGrid.innerHTML='';
+  for(let n=0;n<9;n++){
+    const v=makeVariant(rng,intensity,allowed);
+    const svg=renderLogo(v.params,{cls:'variant'});
+    const card=document.createElement('div');
+    card.className='card';
+    const label='SLR-FORGERY-'+String(n+1).padStart(2,'0');
+    card.innerHTML=
+      '<div class="stage">'+svg+'</div>'
+     +'<div class="card-meta">'
+       +'<span class="card-name">'+label+'</span>'
+       +'<span class="tools">'
+         +'<button class="iconbtn" title="Download PNG" data-act="png">⤓</button>'
+         +'<button class="iconbtn" title="Download SVG" data-act="svg">⌑</button>'
+         +'<button class="iconbtn" title="Toggle defects" data-act="flip">?</button>'
+       +'</span>'
+     +'</div>'
+     +'<div class="flaws"><b>'+v.flaws.length+' deliberate defect'
+       +(v.flaws.length>1?'s':'')+':</b><ul>'
+       +v.flaws.map(f=>'<li>'+f+'</li>').join('')+'</ul></div>';
+    const flawsEl=card.querySelector('.flaws');
+    card.querySelector('[data-act="png"]').onclick=()=>exportPNG(svg,label);
+    card.querySelector('[data-act="svg"]').onclick=()=>exportSVG(svg,label);
+    card.querySelector('[data-act="flip"]').onclick=()=>flawsEl.classList.toggle('show');
+    genGrid.appendChild(card);
+  }
+  syncReveal();
+}
+function syncReveal(){
+  const show=document.getElementById('genReveal').checked;
+  genGrid.querySelectorAll('.flaws').forEach(f=>f.classList.toggle('show',show));
+}
+genInt.addEventListener('input',()=>document.getElementById('genIntVal').textContent=genInt.value+'%');
+document.getElementById('genBtn').addEventListener('click',generate);
+document.getElementById('genReveal').addEventListener('change',syncReveal);
+document.addEventListener('keydown',e=>{
+  if(e.key.toLowerCase()==='g'&&document.getElementById('panel-gen').classList.contains('active')
+     &&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))generate();
+});
+
+/* =========================================================
+   DISTORTION LAB
+   ========================================================= */
+const LAB_CTLS=[
+  {k:'rot',     label:'Rotation',          min:-8,  max:8,  step:.1, suf:'°'},
+  {k:'skewX',   label:'Skew',              min:-10, max:10, step:.1, suf:'°'},
+  {k:'scaleX',  label:'Width',             min:-.2, max:.2, step:.01,suf:'%',mul:100},
+  {k:'scaleY',  label:'Height',            min:-.2, max:.2, step:.01,suf:'%',mul:100},
+  {k:'iconRot', label:'Icon rotation',     min:-25, max:25, step:.5, suf:'°'},
+  {k:'kern',    label:'Letter-spacing',    min:-16, max:16, step:.5, suf:''},
+  {k:'wobble',  label:'Baseline wobble',   min:0,   max:6,  step:.2, suf:'',virtual:true},
+  {k:'hue',     label:'Hue drift',         min:-40, max:40, step:1,  suf:'°'},
+  {k:'sat',     label:'Saturation',        min:-.5, max:.5, step:.02,suf:'%',mul:100},
+  {k:'light',   label:'Lightness',         min:-.3, max:.3, step:.02,suf:'%',mul:100},
+  {k:'blur',    label:'Soft focus',        min:0,   max:3,  step:.1, suf:''},
+  {k:'chroma',  label:'Chromatic aberration',min:0, max:4,  step:.1, suf:''}
+];
+let labP=identity(),labWobble=0;
+const labCtlsEl=document.getElementById('labCtls');
+const labInputs={};
+
+function applyWobble(){
+  // wobble fans the three letters off the baseline deterministically
+  const w=labWobble;
+  labP.sDy=+( w*0.9).toFixed(2); labP.sRot=+( w*0.7).toFixed(2);
+  labP.lDy=+(-w*0.6).toFixed(2); labP.lRot=+(-w*0.4).toFixed(2);
+  labP.rDy=+( w*1.0).toFixed(2); labP.rRot=+( w*0.8).toFixed(2);
+}
+LAB_CTLS.forEach(c=>{
+  const f=document.createElement('div');f.className='field';
+  const init=c.virtual?0:labP[c.k];
+  f.innerHTML='<label>'+c.label+' <span class="val"></span></label>'
+    +'<input type="range" min="'+c.min+'" max="'+c.max+'" step="'+c.step+'" value="'+init+'">';
+  const inp=f.querySelector('input'),val=f.querySelector('.val');
+  labInputs[c.k]=inp;
+  const show=()=>{
+    const raw=+inp.value,d=c.mul?raw*c.mul:raw;
+    val.textContent=(d>0&&c.suf!=='')?'+'+d.toFixed(c.step<1?(c.mul?0:1):0)+c.suf
+                                      :d.toFixed(c.step<1?(c.mul?0:1):0)+c.suf;
+  };
+  inp.addEventListener('input',()=>{
+    if(c.virtual){labWobble=+inp.value;applyWobble();}
+    else labP[c.k]=+inp.value;
+    show();drawLab();
+  });
+  show();
+  labCtlsEl.appendChild(f);
+});
+const labFontField=document.createElement('div');
+labFontField.className='field';
+labFontField.innerHTML='<label>Typeface</label><select><option value="">Authentic SLR mark</option>'
+  +NEAR_FONTS.map(f=>'<option value="'+f+'">'+f+' (wrong)</option>').join('')+'</select>';
+const labFontSel=labFontField.querySelector('select');
+labFontSel.addEventListener('change',()=>{labP.font=labFontSel.value||null;drawLab();});
+labCtlsEl.appendChild(labFontField);
+
+function drawLab(){document.getElementById('labLogo').innerHTML=renderLogo(labP);}
+function lab_reset(){
+  labP=identity();labWobble=0;
+  LAB_CTLS.forEach(c=>{labInputs[c.k].value=c.virtual?0:labP[c.k];
+    labInputs[c.k].dispatchEvent(new Event('input'));});
+  labFontSel.value='';labP.font=null;drawLab();
+}
+function lab_random(){
+  const rng=mulberry32((Math.random()*1e9)|0);
+  const v=makeVariant(rng,0.85,CATS.map(c=>c.key));
+  labP=v.params;labWobble=0;
+  LAB_CTLS.forEach(c=>{
+    if(c.virtual){labInputs[c.k].value=0;}
+    else labInputs[c.k].value=labP[c.k];
+  });
+  // reflect derived letter values back into wobble = 0 (lab shows them via sliders we have)
+  labFontSel.value=labP.font||'';
+  LAB_CTLS.forEach(c=>{if(!c.virtual)labInputs[c.k].dispatchEvent(new Event('input'));});
+  drawLab();
+}
+document.getElementById('labReset').onclick=lab_reset;
+document.getElementById('labRand').onclick=lab_random;
+document.getElementById('labPng').onclick=()=>exportPNG(renderLogo(labP),'SLR-lab-variant');
+document.getElementById('labSvg').onclick=()=>exportSVG(renderLogo(labP),'SLR-lab-variant');
+drawLab();
+
+/* =========================================================
+   SPOT THE REAL ONE
+   ========================================================= */
+const gameGrid=document.getElementById('gameGrid');
+let gScore=0,gRounds=0,gLocked=false;
+
+function newRound(){
+  gLocked=false;
+  document.getElementById('gResult').textContent='';
+  document.getElementById('gResult').className='g-result';
+  const rng=mulberry32((Math.random()*1e9)|0);
+  const realIdx=(rng()*6)|0;
+  gameGrid.innerHTML='';
+  for(let n=0;n<6;n++){
+    const isReal=n===realIdx;
+    const params=isReal?identity():makeVariant(rng,0.55,CATS.map(c=>c.key)).params;
+    const svg=renderLogo(params);
+    const card=document.createElement('div');
+    card.className='card g-tile';
+    card.innerHTML='<div class="stage">'+svg+'</div>'
+      +'<div class="card-meta"><span class="card-name">Specimen '+(n+1)+'</span>'
+      +'<span class="badge" style="visibility:hidden"></span></div>';
+    card.onclick=()=>{
+      if(gLocked)return;gLocked=true;gRounds++;
+      const won=isReal;
+      if(won)gScore++;
+      card.classList.add(won?'picked-right':'picked-wrong');
+      // reveal all badges
+      [...gameGrid.children].forEach((c,idx)=>{
+        const b=c.querySelector('.badge');
+        const real=idx===realIdx;
+        b.style.visibility='visible';
+        b.textContent=real?'authentic':'forgery';
+        b.className='badge '+(real?'real':'fake');
+        c.classList.add('locked');
+        if(real&&!won)c.classList.add('picked-right');
+      });
+      const res=document.getElementById('gResult');
+      res.textContent=won?'✓ Correct — that was the real mark.'
+                         :'✗ That was a forgery. The real one is now marked.';
+      res.className='g-result '+(won?'win':'lose');
+      document.getElementById('gScore').textContent=gScore;
+      document.getElementById('gRounds').textContent=gRounds;
+    };
+    gameGrid.appendChild(card);
+  }
+  document.getElementById('gRounds').textContent=gRounds;
+}
+document.getElementById('gameNew').onclick=newRound;
+
+/* =========================================================
+   PALETTE DRIFT
+   ========================================================= */
+const pHue=document.getElementById('pHue'),pSat=document.getElementById('pSat'),pLit=document.getElementById('pLit');
+function swatch(nm,hx){
+  return'<div class="swatch"><div class="chipcol" style="background:'+hx+'"></div>'
+    +'<div class="lbl"><div class="hx">'+hx.toUpperCase()+'</div>'
+    +'<div class="nm">'+nm+'</div></div></div>';
+}
+function drawPalette(){
+  const dH=+pHue.value,dS=+pSat.value/100,dL=+pLit.value/100;
+  document.getElementById('pHueV').textContent=(dH>=0?'+':'')+dH+'°';
+  document.getElementById('pSatV').textContent=(dS>=0?'+':'')+(dS*100).toFixed(0)+'%';
+  document.getElementById('pLitV').textContent=(dL>=0?'+':'')+(dL*100).toFixed(0)+'%';
+  document.getElementById('palReal').innerHTML=GREENS.map(g=>swatch(g.nm,g.hx)).join('');
+  document.getElementById('palFake').innerHTML=GREENS.map(g=>
+    swatch(g.nm+' (drifted)',drift(g.hx,dH,dS,dL))).join('');
+}
+[pHue,pSat,pLit].forEach(s=>s.addEventListener('input',drawPalette));
+document.getElementById('pRand').onclick=()=>{
+  pHue.value=Math.round((Math.random()*2-1)*18);
+  pSat.value=Math.round((Math.random()*2-1)*22);
+  pLit.value=Math.round((Math.random()*2-1)*14);
+  drawPalette();
+};
+
+/* =========================================================
+   TABS + INIT
+   ========================================================= */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+document.getElementById('headLogo').innerHTML=renderLogo(identity());
+document.getElementById('refLogo').innerHTML=renderLogo(identity());
+generate();
+newRound();
+drawPalette();
+</script>
+</body>
+</html>
